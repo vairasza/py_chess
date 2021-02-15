@@ -2,120 +2,149 @@
 # Abgabe Projektarbeit Einführung ins Programmieren mit Python
 # Namen
 #     Michael Bierschneider, Mat.Nr. 1652774
+#     benötige Note für dieses Projekt
 
+import sys
 import pygame
-from src.meeple import Meeple
+from typing import *
 from src.chessboard import Chessboard
-from src.constants import config
+from src.bot import Bot
+from src.constants import *
+from src.terminal import Terminal
 
-pygame.init()
+class Game:
 
-colour_white = pygame.Color(255, 255, 255)
-colour_black = pygame.Color(0, 0, 0)
-colour_red = pygame.Color(255, 0, 0)
-colour_yellow = pygame.Color(255, 255, 0)
-colour_flip = True
+    def __init__(self) -> None:
+        pygame.init()
+        pygame.font.init()
+        pygame.display.set_caption(GAME_NAME)
 
-window = pygame.display.set_mode((640, 640))
-clock = pygame.time.Clock()
-pygame.display.set_caption("Chess")
+        self.window = pygame.display.set_mode((WINDOW_SIZE_X + TERMINAL_WIDTH, WINDOW_SIZE_Y))  
+        self.background = pygame.Surface((TILE_HEIGHT * ROWS, TILE_WIDTH * COLS))
+        self.clock = pygame.time.Clock()
+        self.terminal_font = pygame.font.SysFont(FONT_TYPE, TERMINAL_FONT_SIZE)
+        self.description_font = pygame.font.SysFont(FONT_TYPE, DESCRIPTION_FONT_SIZE)
 
-width, height = 8 * config["CELL_WIDTH"], 8 * config["CELL_HEIGHT"]
-background = pygame.Surface((width, height))
+        # init chessboard: load sprites from board list, add it to sprite group which easier draws them 
+        self.board = Chessboard()
+        self.sprites = self.board.loadSprites()
 
-rects = []
+        self.chess_sprite_list = pygame.sprite.Group()
+        self.chess_sprite_list.add(self.sprites)
 
-for x in range(0, width, config["CELL_WIDTH"]):
-    colour_flip = not colour_flip
-    for y in range(0, height, config["CELL_HEIGHT"]):
-        rectangle = pygame.Rect(x, y, config["CELL_WIDTH"], config["CELL_HEIGHT"])
-        colour = colour_black if colour_flip else colour_white
-        colour_flip = not colour_flip
-        rects.append(rectangle)
-        pygame.draw.rect(background, colour, rectangle)
+        # rectangle for chessboard; returns rectangles to interact on click events
+        self.chessboard_tiles = self.board.loadTiles(self.background)
 
-gameRunning = True
-playerTurn = True # white starts playing
-selectedField = False
+        # init terminal
+        self.terminal = Terminal(self.terminal_font, self.description_font)
+        
+        pygame.draw.rect(self.window, COLOUR_WHITE, self.terminal.button)
+        pygame.draw.rect(self.window, COLOUR_WHITE, self.terminal.terminal_background)
+        self.window.blit(self.terminal.button_text, (BUTTON_TEXT_X, BUTTON_TEXT_Y))
+                    
+        # conditions for the game loop
+        self.gameRunning = True         # condition for gameloop
+        self.playerTurn = True          # white starts playing
+        self.selectedField = False      # player has selected a field
 
-#first draw highlight
-#then draw meeple
-board = Chessboard()
-i = pygame.sprite.Group()
-sprites = [sprites for sprites in board.array for sprite in sprites if sprite]
-i.add(sprites)
+        # init computer player | black side
+        self.bot = Bot()
 
-while gameRunning:
-    if playerTurn:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                gameRunning = False
-                pygame.quit()
+    def run(self): 
+        while self.gameRunning:
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_x, mouse_y = pygame.mouse.get_pos()
+            # only white players
+            if self.playerTurn:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        sys.exit()
 
-                for j in rects:
-                    if j.collidepoint((mouse_x, mouse_y)):
-                        if not selectedField:
-                            meeple = board.highlightMeeple(j.x, j.y)
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_x, mouse_y = pygame.mouse.get_pos()
+
+                        #restarts the game
+                        if self.terminal.button.collidepoint((mouse_x, mouse_y)):
+                            self.__init__()
+
+                        # this codes remove 2 intendations
+                        selected_tile = [tile for tile in self.chessboard_tiles if tile.collidepoint((mouse_x, mouse_y))]
+
+                        if len(selected_tile) != 1:
+                            break
+
+                        tile_x, tile_y = convert(selected_tile[0].x, selected_tile[0].y)
+
+                        if not self.selectedField:
+                            meeple = self.board.highlightMeeple(tile_x, tile_y)
+
                             if meeple != None:
-                                moves = meeple.possibleMoves(board)
-                                board.highlightMoves(moves)
+                                moves = meeple.possibleMoves(self.board)
+                                self.board.highlightMoves(moves)
                                 #wait for movefieldclick
-                                selectedField = True
+                                self.selectedField = True
                         else:
                             #display moves & wait for player reaction
-                            #checkpromotion of 
-                            if (j.x // 80, j.y // 80) == (board.hightlightedMeepleTile.x, board.hightlightedMeepleTile.y):
-                                board.highlightMoves([])
-                                board.hightlightedMeepleTile = None
-                                selectedField = False
-                            elif ((j.x // 80, j.y // 80) in board.hightlightedMoveFields):
-                                board.highlightMoves([])
-                                result = board.moveMeeple((j.x, j.y))
+                            #checkpromotion of
+                            if (tile_x, tile_y) == (self.board.highlightedMeeple.x, self.board.highlightedMeeple.y):
+                                self.board.highlightMoves([])
+                                self.board.highlightedMeeple = None
+                                self.selectedField = False
 
-                                i.empty()
-                                #sprites = [sprites for sprites in board.array for sprite in sprites if sprite]
-                                for sprites in board.array:
-                                    array = []
-                                    for sprite in sprites:
-                                        if sprite:
-                                            array.append(sprite)
-                                    i.add(array) #pygame is expecting a list or tuple, when only one sprite is in a list, it outmerged 
-                                    #to object and cant be iterated anymore
+                            elif ((tile_x, tile_y) in self.board.highlightedMoveTiles):
+                                self.board.highlightMoves([])
+                                result = self.board.moveMeeple((tile_x, tile_y))
+                                if result[6][2] == "promotion":
+                                    self.board.promotePawn()
+
+                                self.chess_sprite_list.empty()
+                                meeple_sprites = self.board.loadSprites()
+                                self.chess_sprite_list.add(meeple_sprites)
+                                self.playerTurn = False
+                                
+                                self.terminal.addNotation(result, "w")
+
+            #this is black player
+            else:
+                print("black player playing...")
+                self.playerTurn = True
+                self.selectedField = False
+                result = self.bot.play()
+                #handle result
+
+            self.window.blit(self.background, (0, 0))
+
+            highlights = self.board.drawHighlightedMeeple() + self.board.drawHighlightedMoves()
+            board_description = self.board.loadChessboardDescription(self.description_font)
+
+            for highlight_info in highlights:
+                if highlight_info != None:
+                    self.window.blit(highlight_info[0], (highlight_info[1], highlight_info[2]))
+
+            for letter_info in board_description[0]:
+                if letter_info != None:
+                    self.window.blit(letter_info[0], (letter_info[1], letter_info[2]))
+            
+            for number_info in board_description[1]:
+                if number_info != None:
+                    self.window.blit(number_info[0], (number_info[1], number_info[2]))
+            
+            for index, text in enumerate(self.terminal.terminal_white_notation):
+                if number_info != None:
+                    self.window.blit(text, (TERMINAL_TEXT_X_WHITE, TERMINAL_TEXT_Y + index * TERMINAL_TEXT_Y_OFFSET))
+
+            for index, text in enumerate(self.terminal.terminal_black_notation):
+                if number_info != None:
+                    self.window.blit(text, (TERMINAL_TEXT_X_BLACK, TERMINAL_TEXT_Y + index * TERMINAL_TEXT_Y_OFFSET))
+
+            self.chess_sprite_list.draw(self.window)
+
+            pygame.display.flip()
+            self.clock.tick(30)
+
+def convert(coordinate_x: int, coordinate_y: int) -> Set:
+    return (coordinate_x // TILE_WIDTH, coordinate_y // TILE_HEIGHT)
 
 
-                                #i.add(sprites)
-
-                                playerTurn = False
-
-                            #if click on hightlight => selectedField false
-    else:
-        playerTurn = True
-        selectedField = False
-
-
-    window.blit(background, (0, 0))
-
-    #for its in board.hightlights:
-    piece = board.hightlightedMeepleTile
-    if piece != None and piece.colour != "b":
-        test = pygame.Surface((80, 80))
-        test.set_alpha(120)
-        test.fill((255,255,0))
-        window.blit(test, (piece.rect.x, piece.rect.y))
-
-    for tile in board.hightlightedMoveFields:
-        test1 = pygame.Surface((80, 80))
-        test1.set_alpha(120)
-        test1.fill((255,0,0))
-        window.blit(test1, (tile[0] * 80, tile[1] * 80))
-
-    #for row in sprites:
-    #     for sprite in row:
-    #       sprite.draw(window)
-    i.draw(window)
-
-    pygame.display.flip()
-    clock.tick(30)
+if __name__ == "__main__":
+    game = Game()
+    game.run()
