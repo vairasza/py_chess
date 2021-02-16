@@ -3,17 +3,17 @@ import pygame
 
 
 # Colours that are used for chessboard tiles and highlights
-COLOUR_BLACK: Final[Set] = pygame.Color(0, 0, 0)
-COLOUR_WHITE: Final[Set] = pygame.Color(255, 255, 255)
-COLOUR_RED: Final[Set] = pygame.Color(255, 0, 0)
-COLOUR_YELLOW: Final[Set] = pygame.Color(255, 255, 0)
-COLOUR_GREEN: Final[Set] = pygame.Color(0, 255, 0)
+COLOUR_BLACK: Final[pygame.Color] = pygame.Color(0, 0, 0)
+COLOUR_WHITE: Final[pygame.Color] = pygame.Color(255, 255, 255)
+COLOUR_RED: Final[pygame.Color] = pygame.Color(255, 0, 0)
+COLOUR_YELLOW: Final[pygame.Color] = pygame.Color(255, 255, 0)
+COLOUR_GREEN: Final[pygame.Color] = pygame.Color(0, 255, 0)
 COLOUR_ALPHA: Final[int] = 120
 
 
 # font that is used in for col/row display and text terminal
 FONT_TYPE: Final[str] = "assets/Roboto-Light.ttf"
-TERMINAL_FONT_SIZE: Final[int] = 18
+TERMINAL_FONT_SIZE: Final[int] = 20
 DESCRIPTION_FONT_SIZE: Final[int] = 25
 
 
@@ -51,6 +51,22 @@ TERMINAL_RECT_HEIGHT: Final[int] = 565
 TERMINAL_RECT_X: Final[int] = WINDOW_SIZE_X + 10
 TERMINAL_RECT_Y: Final[int] = 70
 TERMINAL_TEXT_X_WHITE: Final[int] = WINDOW_SIZE_X + 15
-TERMINAL_TEXT_X_BLACK: Final[int] = WINDOW_SIZE_X + 130
+TERMINAL_TEXT_X_BLACK: Final[int] = WINDOW_SIZE_X + 120
 TERMINAL_TEXT_Y: Final[int] = 75
 TERMINAL_TEXT_Y_OFFSET: Final[int] = 20
+TERMINAL_MAX_LINES: Final[int] = 28
+
+
+# meeple image paths
+ASSET_W_K: Final[str] = "assets/w_k.png"
+ASSET_W_R: Final[str] = "assets/w_r.png"
+ASSET_W_N: Final[str] = "assets/w_n.png"
+ASSET_W_B: Final[str] = "assets/w_b.png"
+ASSET_W_Q: Final[str] = "assets/w_q.png"
+ASSET_W_P: Final[str] = "assets/w_p.png"
+ASSET_B_K: Final[str] = "assets/b_k.png"
+ASSET_B_R: Final[str] = "assets/b_r.png"
+ASSET_B_N: Final[str] = "assets/b_n.png"
+ASSET_B_B: Final[str] = "assets/b_b.png"
+ASSET_B_Q: Final[str] = "assets/b_q.png"
+ASSET_B_P: Final[str] = "assets/b_p.png"

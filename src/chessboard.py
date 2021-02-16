@@ -5,28 +5,45 @@ from src.constants import *
 
 class Chessboard:
 
-    def __init__(self):
-        #replace filepaths
-        self.array = [
-            [Rook(0, 0, "assets/b_r.png", BLACK_PLAYER), Knight(1,0, "assets/b_n.png", BLACK_PLAYER),
-            Bishop(2,0, "assets/b_b.png", BLACK_PLAYER), Queen(3,0, "assets/b_q.png", BLACK_PLAYER),
-            King(4,0, "assets/b_k.png", BLACK_PLAYER), Bishop(5,0, "assets/b_b.png", BLACK_PLAYER),
-            Knight(6,0, "assets/b_n.png", BLACK_PLAYER), Rook(7,0, "assets/b_r.png", BLACK_PLAYER)],
-            [Pawn(x,1, "assets/b_p.png", BLACK_PLAYER) for x in range(8)],
-            [None for _ in range(8)],
-            [None for _ in range(8)],
-            [None for _ in range(8)],
-            [None for _ in range(8)],
-            [Pawn(x,6, "assets/w_p.png") for x in range(8)],
-            [Rook(0, 7, "assets/w_r.png"), Knight(1,7, "assets/w_n.png"), Bishop(2,7, "assets/w_b.png"), Queen(3,7, "assets/w_q.png"),
-            King(4,7, "assets/w_k.png"), Bishop(5,7, "assets/w_b.png"), Knight(6,7, "assets/w_n.png"), Rook(7,7, "assets/w_r.png")]]
+    def __init__(self) -> None:
+        #for easier access in meeple
+        self.king_w: King = King(4,7, ASSET_W_K)
+        self.king_b: King = King(4,0, ASSET_B_K, BLACK_PLAYER)
+        self.rook_w_left: Rook = Rook(0,7, ASSET_W_R)
+        self.rook_w_right: Rook = Rook(7,7, ASSET_W_R)
+        self.rook_b_left: Rook = Rook(0, 0, ASSET_B_R, BLACK_PLAYER)
+        self.rook_b_right: Rook = Rook(7, 0, ASSET_B_R, BLACK_PLAYER)
+
+        self.array: List = [
+            [self.rook_b_left,
+            Knight(1,0, ASSET_B_N, BLACK_PLAYER),
+            Bishop(2,0, ASSET_B_B, BLACK_PLAYER),
+            Queen(3,0, ASSET_B_Q, BLACK_PLAYER),
+            self.king_b,
+            Bishop(5,0, ASSET_B_B, BLACK_PLAYER),
+            Knight(6,0, ASSET_B_N, BLACK_PLAYER),
+            self.rook_b_right],
+            [Pawn(x,1, ASSET_B_P, BLACK_PLAYER) for x in range(ROWS)],
+            [None for _ in range(ROWS)],
+            [None for _ in range(ROWS)],
+            [None for _ in range(ROWS)],
+            [None for _ in range(ROWS)],
+            [Pawn(x,6, ASSET_W_P) for x in range(ROWS)],
+            [self.rook_w_left,
+            Knight(1,7, ASSET_W_N),
+            Bishop(2,7, ASSET_W_B),
+            Queen(3,7, ASSET_W_Q),
+            self.king_w,
+            Bishop(5,7, ASSET_W_B),
+            Knight(6,7, ASSET_W_N),
+            self.rook_w_right]]
         
-        self.highlightedMeeple: Meeple or None = None
+        self.highlightedMeeple: Union[Meeple, None] = None
         self.highlightedMoveTiles: List = []
 
     # returns all Meeple objects from self.array to draw them
     # pygame is expecting a list or tuple, when only one sprite is in a list, it outmerged 
-    def loadSprites(self) -> List or None:
+    def loadSprites(self) -> Union[List, None]:
         array = []
         for sprites in self.array:
             for sprite in sprites:
@@ -54,7 +71,7 @@ class Chessboard:
         return chessboard_tiles
     
     #rework to class properties -> easier accessable
-    def loadChessboardDescription(self, font) -> List:
+    def loadChessboardDescription(self, font: pygame.font) -> List:
         row_array = []
         for index, letter in enumerate(ROW_DESCRIPTION):
             row_array.append((font.render(letter, True, COLOUR_RED), ROW_DESCRIPTION_INDEX_X + index * TILE_WIDTH, ROW_DESCRIPTION_INDEX_Y))
@@ -66,7 +83,7 @@ class Chessboard:
         return [col_array, row_array]
 
     #change input to set
-    def highlightMeeple(self, row: int, col: int) -> None or Meeple:
+    def highlightMeeple(self, row: int, col: int) -> Union[Meeple, None]:
         unhighlightAll(self)
         self.highlightedMeeple = None
         
@@ -115,14 +132,14 @@ class Chessboard:
         highlighted_meeple = None
 
         if self.highlightedMeeple != None and self.highlightedMeeple.colour != BLACK_PLAYER:
-            surface = pygame.Surface((80, 80))
-            surface.set_alpha(120)
+            surface = pygame.Surface((TILE_HEIGHT, TILE_WIDTH))
+            surface.set_alpha(COLOUR_ALPHA)
             surface.fill(COLOUR_YELLOW)
             highlighted_meeple = (surface, self.highlightedMeeple.rect.x, self.highlightedMeeple.rect.y)
 
         return [highlighted_meeple]
 
-    def drawHighlightedMoves(self):
+    def drawHighlightedMoves(self) -> List[pygame.Surface]:
         surface_list = []
 
         for tile in self.highlightedMoveTiles:
@@ -133,11 +150,11 @@ class Chessboard:
 
         return surface_list
 
-    def promotePawn(self, position, colour = "w"):
+    def promotePawn(self, position, colour = "w"): #TODO
         if colour == "w":
-            self.array[position[1]][position[0]] = Queen(position[0], position[1], "assets/w_q.png")
+            self.array[position[1]][position[0]] = Queen(position[0], position[1], ASSET_W_Q)
         else:
-            self.array[position[1]][position[0]] = Queen(position[0], position[1], "assets/b_q.png", BLACK_PLAYER)
+            self.array[position[1]][position[0]] = Queen(position[0], position[1], ASSET_B_Q, BLACK_PLAYER)
 
 #helper functions
 

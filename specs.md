@@ -29,3 +29,50 @@ Der Kommentar kann so aussehen:
 # Namen
 #     Magdalena Musterfrau, Mat.Nr. 123456
 #     Max Mustermann, Mat.Nr. 654321
+
+
+GUI
+    new game
+    board
+    moves
+
+moves
+    Board: A-H & 1-8 => 64 fields
+    Meeples: K => König; D => Dame; L => Läufer; S => Springer; T => Turm; B => Bauer (bei Bauern wird B weggelassen in der Notation)
+    Setup: z.b. Kd1 => König steht auf d1
+
+    1. [white meeple indicator][origin][x|-][destination][X][+|#] [black meeple indicator][origin][x|-][destination][X][+|#]
+    2. ...
+
+    x => kills an opposing meeple
+    - => moves on free field
+    [...]+ => check
+    [...]# => check mate
+    [...]X => pawn changes to X once reaching the other side; X can be Dame, Turm, Läufer oder Springer
+    o-o | o-o-o => kurze Rochade | lange Rochade; König bewegt sich zuerst, dann Turm
+    = = => remis
+
+    Eine Rochade kann nur dann ausgeführt werden, wenn
+
+Rules Rochade
+- der König noch nicht gezogen wurde,
+- der beteiligte Turm noch nicht gezogen wurde,
+- zwischen dem König und dem beteiligten Turm keine andere Figur steht,
+- der König über kein Feld ziehen muss, das durch eine feindliche Figur bedroht wird,
+- der König vor und nach Ausführung der Rochade nicht im Schach steht.
+
+remis
+- wenn dem am Zug befindlichen Spieler keine legale Zugmöglichkeit zur Verfügung steht, sein König sich jedoch nicht im Schach befindet (Patt)
+- wenn eine Stellung entstanden ist, in welcher keiner der Spieler den gegnerischen König mit irgendeiner Folge von regelgemäßen Zügen mattsetzen kann. Eine solche Stellung heißt „tote Stellung“. Zumeist hat hierbei keiner der beiden Spieler genug Figuren übrig, um den anderen Spieler mattsetzen zu können (z. B. König gegen König, König gegen König und Springer, König gegen König und Läufer). Es gibt auch Fälle, in denen etwa aufgrund einer verkeilten Bauernstruktur keiner der Spieler gewinnen kann.
+
+States: white=player
+round loop:
+- check  if king is check or check mate
+    check: player needs to move a meeple btwn king and opposing meeple or king has to move
+    check mate: king cant move and friendly meeple cant block
+- white turn
+- white possible moves
+- 
+
+- check  if king is check or check mate
+- black turn
