@@ -13,7 +13,7 @@ class Terminal:
         self.terminal_black_notation = []
         self.index = 0
 
-    #(self.array[end_y][end_x].symbol, start_x, start_y, end_x, end_y, True, ["check", "check_mate", "promotion", "castling", "remis"])
+    #(self.array[end_y][end_x].symbol, start_x, start_y, end_x, end_y, True, ["check", "check_mate", "promotion", "castling", "draw"])
     def addNotation(self, result: List, colour: str = "w") -> None:
         #translate rows => lookup in consts
         text = str(result[0]) + str(ROW_DESCRIPTION[result[1]]) + str(result[2] + 1)
@@ -24,11 +24,13 @@ class Terminal:
             text += "Q"
         if "castling" in result[6]:
             text = "o-o"
+        if "castling-long" in result[6]:
+            text = "o-o-o"
         if "check" in result[6]:
             text += "+"
         elif "check_mate" in result[6]:
             text += "#"
-        elif "remis" in result[6]:
+        elif "draw" in result[6]:
             text = "= ="
 
         if colour == "w":

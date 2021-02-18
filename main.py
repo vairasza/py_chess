@@ -6,6 +6,7 @@
 
 import sys
 import pygame
+import random
 from typing import *
 from src.chessboard import Chessboard
 from src.bot import Bot
@@ -24,6 +25,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.terminal_font = pygame.font.SysFont(FONT_TYPE, TERMINAL_FONT_SIZE)
         self.description_font = pygame.font.SysFont(FONT_TYPE, DESCRIPTION_FONT_SIZE)
+        self.game_over_font = pygame.font.SysFont(FONT_TYPE, GAME_OVER_FONT_SIZE)
 
         # init chessboard: load sprites from board list, add it to sprite group which easier draws them 
         self.board = Chessboard()
@@ -50,7 +52,9 @@ class Game:
         # init computer player | black side
         self.bot = Bot()
 
-    def run(self): 
+    def run(self):
+        number_of_moves = self.board.getAllMoves()
+
         while self.gameRunning:
 
             if pygame.event.get(pygame.QUIT):
@@ -58,13 +62,15 @@ class Game:
 
             # only white players
             if self.playerTurn:
+
                 if pygame.event.get(pygame.MOUSEBUTTONDOWN):
                     mouse_x, mouse_y = pygame.mouse.get_pos()
 
                     # reset the game when clicking on the "new game" button by calling __init__ from Game
                     if self.terminal.button.collidepoint((mouse_x, mouse_y)):
                         self.__init__()
-                
+                        self.board.getAllMoves()
+
                     # finds selected tiles on the chessboard
                     selected_tile = [tile for tile in self.chessboard_tiles if tile.collidepoint((mouse_x, mouse_y))]
 
@@ -74,12 +80,13 @@ class Game:
                         continue
 
                     tile_x, tile_y = convert(selected_tile[0].x, selected_tile[0].y)
+                    self.board.king_w.check = False
 
                     if not self.selectedField:
-                        meeple = self.board.highlightMeeple(tile_x, tile_y)
+                        meeple = self.board.highlightMeeple(tile_x, tile_y) ##choose from available moves
 
                         if meeple != None:
-                            moves = meeple.possibleMoves(self.board)
+                            moves = meeple.possible_moves
                             self.board.highlightMoves(moves)
                             self.selectedField = True
                     else:
@@ -92,45 +99,79 @@ class Game:
 
                         else:
                             self.board.highlightMoves([])
-                            #reflect castling
                             result = self.board.moveMeeple((tile_x, tile_y))
-                            #meeple.moved = True
-
-                            #if result[6][2] == "promotion":
-                                #self.board.promotePawn()
 
                             self.chess_sprite_list.empty()
                             meeple_sprites = self.board.loadSprites()
                             self.chess_sprite_list.add(meeple_sprites)
-                            self.playerTurn = False
                             
+                            number_of_moves = self.board.getAllMoves("b")
+                            black_king_check = self.board.king_b.isCheck(self.board)
+
+                            if number_of_moves > 0 and black_king_check:
+                                result[6].append("check")
+                                self.board.king_b.check = True
+
+                            if number_of_moves < 1 and black_king_check:
+                                result[6].append("check_mate")
+                                self.board.king_b.check_mate = True
+                                
+                            if number_of_moves < 1 and not black_king_check:
+                                result[6].append("draw")
+                                self.board.king_b.draw = True
+
                             self.terminal.addNotation(result, "w")
-            
-            
-
-                #for event in pygame.event.get():
-                    #if event.type == pygame.QUIT:
-                    #    sys.exit()
-
-                    #if event.type == pygame.MOUSEBUTTONDOWN:
-                    #    mouse_x, mouse_y = pygame.mouse.get_pos()
-
-                        # restarts the game
-            
+                            self.playerTurn = False
 
             #this is black player
             else:
-                print("black player playing...")
+                if self.board.king_w.check:
+                    print("check: move away!")
+
                 self.playerTurn = True
                 self.selectedField = False
-                result = self.bot.play()
-                #handle result
-                #(self.array[end_y][end_x].symbol, start_x, start_y, end_x, end_y, True, ["check", "check_mate", "promotion", "castling", "remis"])
-                result = ("P", 1, 1, 2, 2, False, [])
+                self.board.king_b.check = False
+
+                number_of_moves = self.board.getAllMoves()
+                meeples = [meeple for row in self.board.array for meeple in row if meeple != None and meeple.colour == "b"]
+
+                meeple = None
+                while True:
+                    meeple = random.choice(meeples)
+                    if len(meeple.possible_moves) > 0:
+                        break
+
+                meeple = self.board.highlightMeeple(meeple.x, meeple.y)
+
+                result = self.board.moveMeeple(random.choice(meeple.possible_moves))
+
+                self.chess_sprite_list.empty()
+                meeple_sprites = self.board.loadSprites()
+                self.chess_sprite_list.add(meeple_sprites)
+
+                number_of_moves = self.board.getAllMoves()
+                white_king_check = self.board.king_w.isCheck(self.board)
+
+                if number_of_moves > 0 and white_king_check:
+                    result[6].append("check")
+                    self.board.king_w.check = True
+
+                if number_of_moves < 1 and white_king_check:
+                    result[6].append("check_mate")
+                    self.board.king_w.check_mate = True
+
+                if number_of_moves < 1 and not white_king_check:
+                    result[6].append("draw")
+                    self.board.king_w.draw = True
+
                 self.terminal.addNotation(result, "b")
             
             #draw GUI - end of loop
             self.drawChessboard()
+
+            if self.board.king_b.draw or self.board.king_w.draw or self.board.king_b.check_mate or self.board.king_w.check_mate:
+                showGameOver(self)
+
             pygame.display.flip()
             self.clock.tick(30)
         
@@ -161,11 +202,37 @@ class Game:
         for index, text in enumerate(self.terminal.terminal_black_notation):
             self.window.blit(text, (TERMINAL_TEXT_X_BLACK, TERMINAL_TEXT_Y + index * TERMINAL_TEXT_Y_OFFSET))
 
+        if self.board.king_b.check:
+            surface = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
+            surface.set_alpha(120)
+            surface.fill(COLOUR_RED)
+            game.window.blit(surface, (self.board.king_b.x * TILE_HEIGHT, self.board.king_b.y * TILE_WIDTH))
+        
+        if self.board.king_w.check:
+            surface = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
+            surface.set_alpha(120)
+            surface.fill(COLOUR_RED)
+            game.window.blit(surface, (self.board.king_w.x * TILE_HEIGHT, self.board.king_w.y * TILE_WIDTH))
+
         #draw sprites at last so they are on top of everything
         self.chess_sprite_list.draw(self.window)
 
 def convert(coordinate_x: int, coordinate_y: int) -> Set:
     return (coordinate_x // TILE_WIDTH, coordinate_y // TILE_HEIGHT)
+
+def showGameOver(game):
+    surface = pygame.Surface((TILE_WIDTH * COLS, TILE_HEIGHT * ROWS))
+    surface.set_alpha(220)
+    surface.fill(COLOUR_WHITE)
+    game.window.blit(surface, (0, 0))
+
+    if game.board.king_b.draw or game.board.king_w.draw:
+        button_text = game.game_over_font.render(GAME_OVER_TEXT_DRAW, True, COLOUR_BLACK)
+    else:
+        winning_player = "White" if game.board.king_b.check_mate else "Black"
+        button_text = game.game_over_font.render(GAME_OVER_TEXT_WIN.format(winning_player), True, COLOUR_BLACK)
+
+    game.window.blit(button_text, (GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y))
 
 if __name__ == "__main__":
     game = Game()
