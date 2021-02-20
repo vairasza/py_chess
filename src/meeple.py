@@ -40,14 +40,16 @@ class Meeple(pygame.sprite.Sprite):
             for i in range(1, 9):
                 if not withinBorders((self.x + pattern[0] * i, self.y + pattern[1] * i)):
                     break
-                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
-                    break
+                #if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
+                #    break
                 if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i] != None:
                     if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour == self.colour:
                         break
                     if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour != self.colour:
                         moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
                         break
+                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])): #test
+                    continue
                 moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
 
         return moves
@@ -61,14 +63,16 @@ class Meeple(pygame.sprite.Sprite):
             for i in range(1, 9):
                 if not withinBorders((self.x + pattern[0] * i, self.y + pattern[1] * i)):
                     break
-                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
-                    break
+                #if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
+                #    break
                 if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i] != None:
                     if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour == self.colour:
                         break
                     if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour != self.colour:
                         moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
                         break
+                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])): #test
+                    continue
                 moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
 
         return moves
@@ -102,25 +106,33 @@ class King(Meeple):
         # castling
         if self.moved == False:
             if self.colour == "w":
-                if (chessboard.rook_w_left.moved == False and 
+                if (isinstance(chessboard.array[7][0], Rook) and
+                    chessboard.array[7][0].colour == self.colour and
+                    chessboard.rook_w_left.moved == False and 
                     chessboard.array[7][1] == None and
                     chessboard.array[7][2] == None and
                     chessboard.array[7][3] == None and
                     not willCheckKing(chessboard, self, (1, 7))):
                     moves.append((1, 7))
-                if (chessboard.rook_w_right.moved == False and 
+                if (isinstance(chessboard.array[7][7], Rook) and
+                    chessboard.array[7][7].colour == self.colour and
+                    chessboard.rook_w_right.moved == False and 
                     chessboard.array[7][5] == None and
                     chessboard.array[7][6] == None and
                     not willCheckKing(chessboard, self, (6, 7))):
                     moves.append((6, 7))
             else:
-                if (chessboard.rook_b_left.moved == False and 
+                if (isinstance(chessboard.array[0][0], Rook) and
+                    chessboard.array[0][0].colour == self.colour and
+                    chessboard.rook_b_left.moved == False and 
                     chessboard.array[0][1] == None and
                     chessboard.array[0][2] == None and
                     chessboard.array[0][3] == None and
                     not willCheckKing(chessboard, self, (1, 0))):
                     moves.append((1, 0))
-                if (chessboard.rook_b_right.moved == False and 
+                if (isinstance(chessboard.array[0][7], Rook) and
+                    chessboard.array[0][7].colour == self.colour and
+                    chessboard.rook_b_right.moved == False and 
                     chessboard.array[0][5] == None and
                     chessboard.array[0][6] == None and
                     not willCheckKing(chessboard, self, (6, 0))):
@@ -171,7 +183,6 @@ class King(Meeple):
                     break
                 if (isinstance(chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i], Queen) or
                     isinstance(chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i], Rook)):
-
                     return True
 
         # knight pattern
@@ -317,11 +328,15 @@ def willCheckKing(chessboard, meeple: Meeple, new_position: Set) -> bool:
     save_killed_meeple = chessboard.array[end_y][end_x]
     chessboard.array[start_y][start_x] = None
     chessboard.array[end_y][end_x] = meeple
+    chessboard.array[end_y][end_x].x = end_x
+    chessboard.array[end_y][end_x].y = end_y
 
     result = king.isCheck(chessboard)
 
     #return meeple to its previous location
     chessboard.array[start_y][start_x] = meeple
+    chessboard.array[end_y][end_x].x = start_x
+    chessboard.array[end_y][end_x].y = start_y
     chessboard.array[end_y][end_x] = save_killed_meeple
 
     return result

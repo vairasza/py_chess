@@ -51,10 +51,11 @@ class Game:
 
         # init computer player | black side
         self.bot = Bot()
+        
+        # init first possible moves for white player
+        self.number_of_moves = self.board.getAllMoves()
 
     def run(self):
-        number_of_moves = self.board.getAllMoves()
-
         while self.gameRunning:
 
             if pygame.event.get(pygame.QUIT):
@@ -70,101 +71,100 @@ class Game:
                     if self.terminal.button.collidepoint((mouse_x, mouse_y)):
                         self.__init__()
                         self.board.getAllMoves()
+                    
+                    if self.number_of_moves > 0:
+                        self.board.king_w.check = False
 
-                    # finds selected tiles on the chessboard
-                    selected_tile = [tile for tile in self.chessboard_tiles if tile.collidepoint((mouse_x, mouse_y))]
+                        # finds selected tiles on the chessboard
+                        selected_tile = [tile for tile in self.chessboard_tiles if tile.collidepoint((mouse_x, mouse_y))]
 
-                    # if a position outside the chessboard was selected, jump to the next iteration of the game loop
-                    # prevents out of bound exception
-                    if len(selected_tile) != 1:
-                        continue
+                        # if a position outside the chessboard was selected, jump to the next iteration of the game loop
+                        # prevents out of bound exception
+                        if len(selected_tile) != 1:
+                            continue
 
-                    tile_x, tile_y = convert(selected_tile[0].x, selected_tile[0].y)
-                    self.board.king_w.check = False
+                        tile_x, tile_y = convert(selected_tile[0].x, selected_tile[0].y)
 
-                    if not self.selectedField:
-                        meeple = self.board.highlightMeeple(tile_x, tile_y) ##choose from available moves
+                        if not self.selectedField:
+                            meeple = self.board.highlightMeeple(tile_x, tile_y) # choose from available moves
 
-                        if meeple != None:
-                            moves = meeple.possible_moves
-                            self.board.highlightMoves(moves)
-                            self.selectedField = True
-                    else:
-                        #display moves & wait for player reaction
-                        #checkpromotion of
-                        if not (tile_x, tile_y) in self.board.highlightedMoveTiles:
-                            self.board.highlightMoves([])
-                            self.board.highlightedMeeple = None
-                            self.selectedField = False
-
+                            if meeple != None:
+                                moves = meeple.possible_moves
+                                self.board.highlightMoves(moves)
+                                self.selectedField = True
                         else:
-                            self.board.highlightMoves([])
-                            result = self.board.moveMeeple((tile_x, tile_y))
+                            if not (tile_x, tile_y) in self.board.highlightedMoveTiles:
+                                self.board.highlightMoves([])
+                                self.board.highlightedMeeple = None
+                                self.selectedField = False
 
-                            self.chess_sprite_list.empty()
-                            meeple_sprites = self.board.loadSprites()
-                            self.chess_sprite_list.add(meeple_sprites)
-                            
-                            number_of_moves = self.board.getAllMoves("b")
-                            black_king_check = self.board.king_b.isCheck(self.board)
+                            else:
+                                self.board.highlightMoves([])
+                                result = self.board.moveMeeple((tile_x, tile_y))
 
-                            if number_of_moves > 0 and black_king_check:
-                                result[6].append("check")
-                                self.board.king_b.check = True
-
-                            if number_of_moves < 1 and black_king_check:
-                                result[6].append("check_mate")
-                                self.board.king_b.check_mate = True
+                                self.chess_sprite_list.empty()
+                                meeple_sprites = self.board.loadSprites()
+                                self.chess_sprite_list.add(meeple_sprites)
                                 
-                            if number_of_moves < 1 and not black_king_check:
-                                result[6].append("draw")
-                                self.board.king_b.draw = True
+                                self.number_of_moves = self.board.getAllMoves("b")
+                                black_king_check = self.board.king_b.isCheck(self.board)
 
-                            self.terminal.addNotation(result, "w")
-                            self.playerTurn = False
+                                if self.number_of_moves > 0 and black_king_check:
+                                    result[6].append("check")
+                                    self.board.king_b.check = True
+
+                                if self.number_of_moves < 1 and black_king_check:
+                                    result[6].append("check_mate")
+                                    self.board.king_b.check_mate = True
+                                    
+                                if self.number_of_moves < 1 and not black_king_check:
+                                    result[6].append("draw")
+                                    self.board.king_b.draw = True
+
+                                self.terminal.addNotation(result, "w")
+                                self.playerTurn = False
 
             #this is black player
             else:
-                if self.board.king_w.check:
-                    print("check: move away!")
-
                 self.playerTurn = True
                 self.selectedField = False
-                self.board.king_b.check = False
 
-                number_of_moves = self.board.getAllMoves()
-                meeples = [meeple for row in self.board.array for meeple in row if meeple != None and meeple.colour == "b"]
+                if self.number_of_moves > 0:
+                    pygame.time.delay(400)  # delay black side move a little bit to see that the black king was checked
+                    self.board.king_b.check = False
 
-                meeple = None
-                while True:
-                    meeple = random.choice(meeples)
-                    if len(meeple.possible_moves) > 0:
-                        break
+                    meeples = [meeple for row in self.board.array for meeple in row if meeple != None and meeple.colour == "b"]
 
-                meeple = self.board.highlightMeeple(meeple.x, meeple.y)
+                    meeple = None
+                    while True:
+                        meeple = random.choice(meeples)
+                        if len(meeple.possible_moves) > 0:
+                            break
 
-                result = self.board.moveMeeple(random.choice(meeple.possible_moves))
+                    meeple = self.board.highlightMeeple(meeple.x, meeple.y)
 
-                self.chess_sprite_list.empty()
-                meeple_sprites = self.board.loadSprites()
-                self.chess_sprite_list.add(meeple_sprites)
+                    result = self.board.moveMeeple(random.choice(meeple.possible_moves))
 
-                number_of_moves = self.board.getAllMoves()
-                white_king_check = self.board.king_w.isCheck(self.board)
+                    self.chess_sprite_list.empty()
+                    meeple_sprites = self.board.loadSprites()
+                    self.chess_sprite_list.add(meeple_sprites)
 
-                if number_of_moves > 0 and white_king_check:
-                    result[6].append("check")
-                    self.board.king_w.check = True
+                    self.number_of_moves = self.board.getAllMoves()
+                    white_king_check = self.board.king_w.isCheck(self.board)
 
-                if number_of_moves < 1 and white_king_check:
-                    result[6].append("check_mate")
-                    self.board.king_w.check_mate = True
+                    if self.number_of_moves > 0 and white_king_check:
+                        result[6].append("check")
+                        self.board.king_w.check = True
 
-                if number_of_moves < 1 and not white_king_check:
-                    result[6].append("draw")
-                    self.board.king_w.draw = True
+                    if self.number_of_moves < 1 and white_king_check:
+                        result[6].append("check_mate")
+                        self.board.king_w.check_mate = True
 
-                self.terminal.addNotation(result, "b")
+                    if self.number_of_moves < 1 and not white_king_check:
+                        result[6].append("draw")
+                        self.board.king_w.draw = True
+
+                    self.terminal.addNotation(result, "b")
             
             #draw GUI - end of loop
             self.drawChessboard()
@@ -204,13 +204,13 @@ class Game:
 
         if self.board.king_b.check:
             surface = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
-            surface.set_alpha(120)
+            surface.set_alpha(COLOUR_ALPHA)
             surface.fill(COLOUR_RED)
             game.window.blit(surface, (self.board.king_b.x * TILE_HEIGHT, self.board.king_b.y * TILE_WIDTH))
         
         if self.board.king_w.check:
             surface = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
-            surface.set_alpha(120)
+            surface.set_alpha(COLOUR_ALPHA)
             surface.fill(COLOUR_RED)
             game.window.blit(surface, (self.board.king_w.x * TILE_HEIGHT, self.board.king_w.y * TILE_WIDTH))
 
@@ -222,17 +222,17 @@ def convert(coordinate_x: int, coordinate_y: int) -> Set:
 
 def showGameOver(game):
     surface = pygame.Surface((TILE_WIDTH * COLS, TILE_HEIGHT * ROWS))
-    surface.set_alpha(220)
+    surface.set_alpha(COLOUR_GAME_OVER_ALPHA)
     surface.fill(COLOUR_WHITE)
     game.window.blit(surface, (0, 0))
 
     if game.board.king_b.draw or game.board.king_w.draw:
         button_text = game.game_over_font.render(GAME_OVER_TEXT_DRAW, True, COLOUR_BLACK)
+        game.window.blit(button_text, (GAME_OVER_TEXT_X + 170, GAME_OVER_TEXT_Y))
     else:
         winning_player = "White" if game.board.king_b.check_mate else "Black"
         button_text = game.game_over_font.render(GAME_OVER_TEXT_WIN.format(winning_player), True, COLOUR_BLACK)
-
-    game.window.blit(button_text, (GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y))
+        game.window.blit(button_text, (GAME_OVER_TEXT_X, GAME_OVER_TEXT_Y))
 
 if __name__ == "__main__":
     game = Game()

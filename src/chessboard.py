@@ -36,7 +36,9 @@ class Chessboard:
             self.king_w,
             Bishop(5,7, ASSET_W_B),
             Knight(6,7, ASSET_W_N),
-            self.rook_w_right]]
+            self.rook_w_right]
+        ]
+
         
         self.highlightedMeeple: Union[Meeple, None] = None
         self.highlightedMoveTiles: List = []
@@ -90,8 +92,7 @@ class Chessboard:
                 if col != None and col.colour == colour:
                     counter += col.calcNewMoves(self)
 
-        return counter
-                
+        return counter 
 
     #change input to set
     def highlightMeeple(self, row: int, col: int) -> Union[Meeple, None]:
@@ -246,7 +247,7 @@ class Chessboard:
 
         return surface_list
 
-    def promotePawn(self, position, colour = "w"): #TODO
+    def promotePawn(self, position, colour = "w"):
         if colour == "w":
             self.array[position[1]][position[0]] = Queen(position[0], position[1], ASSET_W_Q)
         else:

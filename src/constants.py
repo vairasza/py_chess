@@ -9,6 +9,7 @@ COLOUR_RED: Final[pygame.Color] = pygame.Color(255, 0, 0)
 COLOUR_YELLOW: Final[pygame.Color] = pygame.Color(255, 255, 0)
 COLOUR_GREEN: Final[pygame.Color] = pygame.Color(0, 255, 0)
 COLOUR_ALPHA: Final[int] = 120
+COLOUR_GAME_OVER_ALPHA: Final[int] = 220
 
 
 # font that is used in for col/row display and text terminal
