@@ -27,10 +27,6 @@ TILE_HEIGHT: Final[int] = TILE_WIDTH
 WINDOW_SIZE_X: Final[int] = TILE_WIDTH * COLS
 WINDOW_SIZE_Y: Final[int] = TILE_HEIGHT * ROWS
 GAME_NAME: Final[str] = "Chess"
-GAME_OVER_TEXT_WIN: Final[str] = "{} player wins!"
-GAME_OVER_TEXT_DRAW: Final[str] = "Draw!"
-GAME_OVER_TEXT_X: Final[int] = 70
-GAME_OVER_TEXT_Y: Final[int] = 290
 WHITE_PLAYER: Final[str] = "w"
 BLACK_PLAYER: Final[str] = "b"
 ROW_DESCRIPTION: Final[List[str]] = ["a", "b", "c", "d", "e", "f", "g", "h"]
@@ -39,6 +35,14 @@ ROW_DESCRIPTION_INDEX_X: Final[int] = 68
 ROW_DESCRIPTION_INDEX_Y: Final[int] = 622
 COL_DESCRIPTION_INDEX_X: Final[int] = 2
 COL_DESCRIPTION_INDEX_Y: Final[int] = 2
+
+
+# game over screen
+GAME_OVER_TEXT_WIN: Final[str] = "{} player wins!"
+GAME_OVER_TEXT_DRAW: Final[str] = "Draw!"
+GAME_OVER_TEXT_X: Final[int] = 70
+GAME_OVER_TEXT_Y: Final[int] = 290
+GAME_OVER_DRAW_OFFSET: Final[int] = 170
 
 
 # terminal configuration

@@ -1,5 +1,5 @@
-import pygame
 from typing import *
+import pygame
 from src.meeple import *
 from src.constants import *
 
@@ -84,7 +84,7 @@ class Chessboard:
 
         return [col_array, row_array]
 
-    def getAllMoves(self, colour: str = "w") -> List:
+    def getAllMoves(self, colour: str) -> List:
         counter = 0
 
         for row in self.array:
@@ -94,12 +94,12 @@ class Chessboard:
 
         return counter 
 
-    #change input to set
+    # highlightes white meeple that was clicked
     def highlightMeeple(self, row: int, col: int) -> Union[Meeple, None]:
         unhighlightAll(self)
         self.highlightedMeeple = None
         
-        if self.array[col][row] == None:# or self.array[col][row].colour == BLACK_PLAYER:
+        if self.array[col][row] == None:
             return None
 
         if not self.array[col][row].highlighted:
@@ -112,6 +112,7 @@ class Chessboard:
             self.highlightedMeeple = None
             return None
         
+    # highlightes possible moves of a meeple in yellow
     def highlightMoves(self, moves: Set) -> None:
         self.highlightedMoveTiles = moves
     
@@ -247,14 +248,16 @@ class Chessboard:
 
         return surface_list
 
+    # if pawn is standing on the last row, he is promoted to queen (normally a player can choose between rook, knight, bishop and queen)
     def promotePawn(self, position, colour = "w"):
         if colour == "w":
             self.array[position[1]][position[0]] = Queen(position[0], position[1], ASSET_W_Q)
         else:
             self.array[position[1]][position[0]] = Queen(position[0], position[1], ASSET_B_Q, BLACK_PLAYER)
 
-#helper functions
+# helper functions
 
+# if possbilemoves and meeple is selected and none of the possible moves (yellow tiles) is clicked, all tiles are unselected
 def unhighlightAll(chessboard: Chessboard) -> None:
     for row in chessboard.array:
         for tile in row:

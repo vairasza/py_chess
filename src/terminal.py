@@ -1,3 +1,4 @@
+from typing import *
 import pygame
 from src.constants import *
 
@@ -13,10 +14,11 @@ class Terminal:
         self.terminal_black_notation = []
         self.index = 0
 
-    #(self.array[end_y][end_x].symbol, start_x, start_y, end_x, end_y, True, ["check", "check_mate", "promotion", "castling", "draw"])
+    # result contains: 
     def addNotation(self, result: List, colour: str = "w") -> None:
-        #translate rows => lookup in consts
+        # translate rows to letter => e.g. (1,1) => b2
         text = str(result[0]) + str(ROW_DESCRIPTION[result[1]]) + str(result[2] + 1)
+        # x => meeple was killed this turn
         text += "-" if result[5] else "x" 
         text += str(ROW_DESCRIPTION[result[3]]) + str(result[4] + 1)
 
@@ -41,7 +43,7 @@ class Terminal:
         else:
             self.terminal_black_notation.append(self.terminal_font.render(text, True, COLOUR_BLACK))
 
-        #remove overflowing round notations    
+        # remove overflowing round notations  
         if len(self.terminal_white_notation) > TERMINAL_MAX_LINES:
             self.terminal_white_notation.pop(0)
             self.terminal_black_notation.pop(0)
