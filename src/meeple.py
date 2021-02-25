@@ -32,13 +32,21 @@ class Meeple(pygame.sprite.Sprite):
         self.sprite = pygame.image.load(image_path)
         self.image.blit(self.sprite, (0, 0))
 
+        # move patterns
+        self.line_patterns = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        self.diag_patterns = [(1, 1), (-1, -1), (-1, 1), (1, -1)]
+        self.pawn_offset_pattern = [(-1, -1), (1, -1)] if self.colour == "w" else [(-1, 1), (1, 1)]
+        self.pawn_singleMove = -1 if self.colour == "w" else 1
+        self.pawn_doubleMove = -2 if self.colour == "w" else 2
+        self.king_move_patterns = [(1, 1), (-1, -1), (-1, 1), (1, -1), (1, 0), (-1, 0), (0, 1), (0, -1)]
+        self.knight_move_pattern = [(1, -2), (-1, -2), (2, -1), (2, 1), (1, 2), (-1, 2), (-2, 1), (-2, -1)]
+
     # calculates moves for rook and queen - moves in vertical and horizontal direction that have no limit to one step
     def lineMoves(self, chessboard) -> List[Set]:
         # append all moves as a set to this list and return to gameloop for highlighting
         moves = []
-        movePattern = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
-        for pattern in movePattern:
+        for pattern in self.line_patterns:
             for i in range(1, 9):
                 if not withinBorders((self.x + pattern[0] * i, self.y + pattern[1] * i)):
                     break
@@ -50,7 +58,7 @@ class Meeple(pygame.sprite.Sprite):
                     if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour != self.colour:
                         moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
                         break
-                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])): #test
+                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
                     continue
                 moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
 
@@ -59,10 +67,9 @@ class Meeple(pygame.sprite.Sprite):
     # calculates moves for bishop and queen - moves in diagonal directions that have no limit to one step
     def diagonalMoves(self, chessboard) -> List[Set]:
         # append all moves as a set to this list and return to gameloop for highlighting
-        moves = []
-        movePattern = [(1, 1), (-1, -1), (-1, 1), (1, -1)]
+        moves = [] 
 
-        for pattern in movePattern:
+        for pattern in self.diag_patterns:
             for i in range(1, 9):
                 if not withinBorders((self.x + pattern[0] * i, self.y + pattern[1] * i)):
                     break
@@ -74,7 +81,7 @@ class Meeple(pygame.sprite.Sprite):
                     if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour != self.colour:
                         moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
                         break
-                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])): #test
+                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
                     continue
                 moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
 
@@ -92,9 +99,8 @@ class King(Meeple):
     #   reflected in chessboard.move
     def calcNewMoves(self, chessboard) -> int:
         moves = []
-        movePattern = [(1, 1), (-1, -1), (-1, 1), (1, -1), (1, 0), (-1, 0), (0, 1), (0, -1)]
 
-        for pattern in movePattern:
+        for pattern in self.king_move_patterns:
             if not withinBorders((self.x + pattern[0], self.y + pattern[1])):
                 continue
             if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
@@ -145,17 +151,10 @@ class King(Meeple):
 
     # returns true if king is in check
     def isCheck(self, chessboard) -> bool:
-        # now consider all position from where the king can be checked
-        # can leave out knight evaluation because it can jump over your meeples
-        diagPattern = [(1, 1), (-1, -1), (-1, 1), (1, -1)]
-        linePattern = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        knightPattern = [(1, -2), (-1, -2), (2, -1), (2, 1), (1, 2), (-1, 2), (-2, 1), (-2, -1)]
-        # when king is white, pawns can only attack from top to bottom and vice versa
-        pawnOffsetPattern = [(-1, -1), (1, -1)] if self.colour == "w" else [(-1, 1), (1, 1)]
-        kingPattern = [(1, 1), (-1, -1), (-1, 1), (1, -1), (1, 0), (-1, 0), (0, 1), (0, -1)]  
+        # consider all position from where the king can be checked  
 
         # diagonal patterns - queen and bishop
-        for pattern in diagPattern:
+        for pattern in self.diag_patterns:
             for i in range(1, 9):
                 if not withinBorders((self.x + pattern[0] * i, self.y + pattern[1] * i)):
                     break
@@ -172,7 +171,7 @@ class King(Meeple):
                     return True
     
         # line patterns - queen and rook
-        for pattern in linePattern:
+        for pattern in self.line_patterns:
             for i in range(1, 9):
                 if not withinBorders((self.x + pattern[0] * i, self.y + pattern[1] * i)):
                     break
@@ -189,7 +188,7 @@ class King(Meeple):
                     return True
 
         # knight pattern
-        for pattern in knightPattern:
+        for pattern in self.knight_move_pattern:
             if not withinBorders((self.x + pattern[0], self.y + pattern[1])):
                 continue
             if chessboard.array[self.y + pattern[1]][self.x + pattern[0]] == None:
@@ -200,7 +199,7 @@ class King(Meeple):
                 return True
         
         # pawn patterns
-        for pattern in pawnOffsetPattern:
+        for pattern in self.pawn_offset_pattern:
             if not withinBorders((self.x + pattern[0], self.y + pattern[1])):
                 continue
             if chessboard.array[self.y + pattern[1]][self.x + pattern[0]] == None:
@@ -211,7 +210,7 @@ class King(Meeple):
                 return True
 
         # king patterns
-        for pattern in kingPattern:
+        for pattern in self.king_move_patterns:
             if not withinBorders((self.x + pattern[0], self.y + pattern[1])):
                 continue
             if chessboard.array[self.y + pattern[1]][self.x + pattern[0]] == None:
@@ -251,9 +250,8 @@ class Knight(Meeple):
 
     def calcNewMoves(self, chessboard,) -> int:
         moves = []
-        movePattern = [(1, -2), (-1, -2), (2, -1), (2, 1), (1, 2), (-1, 2), (-2, 1), (-2, -1)]
 
-        for pattern in movePattern:
+        for pattern in self.knight_move_pattern:
             if not withinBorders((self.x + pattern[0], self.y + pattern[1])):
                 continue
             if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
@@ -289,34 +287,33 @@ class Pawn(Meeple):
     def calcNewMoves(self, chessboard) -> int:
         # append all moves as a set to this list and return to gameloop for highlighting
         moves = []
-        singleMove = -1 if self.colour == "w" else 1
-        doubleMove = -2 if self.colour == "w" else 2
-        offsetMove = [(-1, -1), (1, -1)] if self.colour == "w" else [(-1, 1), (1, 1)]
-
+        
         # one step forward
         # white pawns are moving up => y -= 1 because point of origin is
         # check if tile ahead is free of meeples and your move does not set your king into check
         # we dont have to check if move is within border cause pawn will promote to e.g. queen on last row
-        if chessboard.array[self.y + singleMove][self.x] == None and not willCheckKing(chessboard, self, (self.x, self.y + singleMove)):
-            moves.append((self.x, self.y + singleMove))
+        if chessboard.array[self.y + self.pawn_singleMove][self.x] == None and not willCheckKing(chessboard, self, (self.x, self.y + self.pawn_singleMove)):
+            moves.append((self.x, self.y + self.pawn_singleMove))
 
         # two steps forward
         # this move is only allowed once per meeple; set self.moved to True meeple has actually moved, not in the possibleMoves function
         # we dont have to check if move is within border cause this move is only allowed once
         # check both fields
         if (not self.moved and
-            chessboard.array[self.y + singleMove][self.x] == None and
-            chessboard.array[self.y + doubleMove][self.x] == None and
-            not willCheckKing(chessboard, self, (self.x, self.y + doubleMove))):
-            moves.append((self.x, self.y + doubleMove))
+            chessboard.array[self.y + self.pawn_singleMove][self.x] == None and
+            chessboard.array[self.y + self.pawn_doubleMove][self.x] == None and
+            not willCheckKing(chessboard, self, (self.x, self.y + self.pawn_doubleMove))):
+
+            moves.append((self.x, self.y + self.pawn_doubleMove))
 
         # this move can only be performed when a meeple of the opposing side is diagonal to this meeple
         # can promote: handler later!
-        for move in offsetMove:
+        for move in self.pawn_offset_pattern:
             if (withinBorders((self.x + move[0], self.y + move[1])) and 
                 chessboard.array[self.y + move[1]][self.x + move[0]] != None and 
                 chessboard.array[self.y + move[1]][self.x + move[0]].colour != self.colour and 
                 not willCheckKing(chessboard, self, (self.x + move[0], self.y + move[1]))):
+
                 moves.append((self.x + move[0], self.y + move[1]))
 
         self.possible_moves = moves
