@@ -80,3 +80,7 @@ ASSET_B_N: Final[str] = "assets/b_n.png"
 ASSET_B_B: Final[str] = "assets/b_b.png"
 ASSET_B_Q: Final[str] = "assets/b_q.png"
 ASSET_B_P: Final[str] = "assets/b_p.png"
+
+
+# calculation
+MAX_ITERATIONS: Final[int] = 9

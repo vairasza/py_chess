@@ -40,49 +40,30 @@ class Meeple(pygame.sprite.Sprite):
         self.pawn_doubleMove = -2 if self.colour == "w" else 2
         self.king_move_patterns = [(1, 1), (-1, -1), (-1, 1), (1, -1), (1, 0), (-1, 0), (0, 1), (0, -1)]
         self.knight_move_pattern = [(1, -2), (-1, -2), (2, -1), (2, 1), (1, 2), (-1, 2), (-2, 1), (-2, -1)]
-
-    # calculates moves for rook and queen - moves in vertical and horizontal direction that have no limit to one step
-    def lineMoves(self, chessboard) -> List[Set]:
-        # append all moves as a set to this list and return to gameloop for highlighting
-        moves = []
-
-        for pattern in self.line_patterns:
-            for i in range(1, 9):
-                if not withinBorders((self.x + pattern[0] * i, self.y + pattern[1] * i)):
-                    break
-                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
-                    break
-                if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i] != None:
-                    if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour == self.colour:
-                        break
-                    if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour != self.colour:
-                        moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
-                        break
-                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
-                    continue
-                moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
-
-        return moves
     
-    # calculates moves for bishop and queen - moves in diagonal directions that have no limit to one step
-    def diagonalMoves(self, chessboard) -> List[Set]:
+    # calculates moves based on patterns
+    def _calcMoves(self, chessboard, patterns, index) -> List[Set]:
         # append all moves as a set to this list and return to gameloop for highlighting
         moves = [] 
 
-        for pattern in self.diag_patterns:
-            for i in range(1, 9):
+        for pattern in patterns:
+            for i in range(1, index):
+                # checks if the move (x,y) is within the chessboard
                 if not withinBorders((self.x + pattern[0] * i, self.y + pattern[1] * i)):
                     break
+                # checks if the move would set the king in chess
                 if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
-                    break
+                    continue
+                # checks if the field is free
                 if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i] != None:
+                    # if the tile is occupied by a friendly meeple break for loop (no longer looking in this direction)
                     if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour == self.colour:
                         break
+                    # if the tile is occupied by a enemy meeple, add move and break for loop (no longer looking in this direction)
                     if chessboard.array[self.y + pattern[1] * i][self.x + pattern[0] * i].colour != self.colour:
                         moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
                         break
-                if willCheckKing(chessboard, self, (self.x + pattern[0], self.y + pattern[1])):
-                    continue
+
                 moves.append((self.x + pattern[0] * i, self.y + pattern[1] * i))
 
         return moves
@@ -229,7 +210,7 @@ class Queen(Meeple):
         self.symbol = "Q"
 
     def calcNewMoves(self, chessboard) -> int:
-        self.possible_moves = self.diagonalMoves(chessboard) + self.lineMoves(chessboard)
+        self.possible_moves = self._calcMoves(chessboard, self.diag_patterns, MAX_ITERATIONS) + self._calcMoves(chessboard, self.line_patterns, MAX_ITERATIONS)
         return len(self.possible_moves)
 
 class Bishop(Meeple):
@@ -239,7 +220,7 @@ class Bishop(Meeple):
         self.symbol = "B"
     
     def calcNewMoves(self, chessboard) -> int:
-        self.possible_moves = self.diagonalMoves(chessboard)
+        self.possible_moves = self._calcMoves(chessboard, self.diag_patterns, MAX_ITERATIONS)
         return len(self.possible_moves)
 
 class Knight(Meeple):
@@ -274,7 +255,7 @@ class Rook(Meeple):
         self.symbol = "R"
     
     def calcNewMoves(self, chessboard) -> int:
-        self.possible_moves = self.lineMoves(chessboard)
+        self.possible_moves = self._calcMoves(chessboard, self.line_patterns, MAX_ITERATIONS)
         return len(self.possible_moves)
 
 class Pawn(Meeple):
