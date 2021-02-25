@@ -96,7 +96,7 @@ class Chessboard:
 
     # highlightes white meeple that was clicked
     def highlightMeeple(self, row: int, col: int) -> Union[Meeple, None]:
-        unhighlightAll(self)
+        self.unhighlightAll()
         self.highlightedMeeple = None
         
         if self.array[col][row] == None:
@@ -216,7 +216,7 @@ class Chessboard:
             special.append("castling")
             self.array[end_y][end_x].castling = True
             
-        # double move and castling are only allowed on the first move
+        # double move and castling are only allowed on the first move of the meeple
         if self.highlightedMeeple.symbol == "P" or self.highlightedMeeple.symbol == "K" or self.highlightedMeeple.symbol == "R":
             self.highlightedMeeple.moved = True
         
@@ -255,11 +255,9 @@ class Chessboard:
         else:
             self.array[position[1]][position[0]] = Queen(position[0], position[1], ASSET_B_Q, BLACK_PLAYER)
 
-# helper functions
-
 # if possbilemoves and meeple is selected and none of the possible moves (yellow tiles) is clicked, all tiles are unselected
-def unhighlightAll(chessboard: Chessboard) -> None:
-    for row in chessboard.array:
-        for tile in row:
-            if tile != None:
-                tile.highlighted = False
+    def unhighlightAll(self) -> None:
+        for row in self.array:
+            for tile in row:
+                if tile != None:
+                    tile.highlighted = False
