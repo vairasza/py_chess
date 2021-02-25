@@ -1,2 +1,6 @@
+source reference:
+
 Font: https://fonts.google.com/specimen/Roboto
 Images: https://upload.wikimedia.org/wikipedia/commons/b/b2/Chess_Pieces_Sprite.svg (mit Gimp zerteilt, skaliert und leicht modifiziert)
+
+https://www.pygame.org/docs/
